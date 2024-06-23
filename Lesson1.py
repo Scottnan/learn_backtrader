@@ -25,7 +25,7 @@ for stock in daily_price['sec_code'].unique():
     # print(data_.dtypes)
     # 缺失值处理：日期对齐时会使得有些交易日的数据为空，所以需要对缺失数据进行填充
     data_.loc[:, ['volume', 'openinterest']] = data_.loc[:, ['volume', 'openinterest']].fillna(0)
-    data_.loc[:, ['open', 'high', 'low', 'close']] = data_.loc[:, ['open', 'high', 'low', 'close']].fillna(method='pad')
+    data_.loc[:, ['open', 'high', 'low', 'close']] = data_.loc[:, ['open', 'high', 'low', 'close']].ffill()
     data_.loc[:, ['open', 'high', 'low', 'close']] = data_.loc[:, ['open', 'high', 'low', 'close']].fillna(0)
     # 导入数据
     datafeed = bt.feeds.PandasData(dataname=data_, fromdate=datetime.datetime(2019, 1, 2),
@@ -53,7 +53,7 @@ class TestStrategy(bt.Strategy):
     def next(self):
         dt = self.datas[0].datetime.date(0)  # 获取当前的回测时间点
         # 如果是调仓日，则进行调仓操作
-        if dt in self.trade_dates:
+        if pd.to_datetime(dt) in self.trade_dates:
             print("--------------{} 为调仓日----------".format(dt))
             # 在调仓之前，取消之前所下的没成交也未到期的订单
             if len(self.order_list) > 0:
@@ -121,7 +121,7 @@ cerebro.broker.setcash(100000000.0)
 # 佣金，双边各 0.0003
 cerebro.broker.setcommission(commission=0.0003)
 # 滑点：双边各 0.0001
-cerebro.broker.set_slippage_perc(perc=0.005)
+cerebro.broker.set_slippage_perc(perc=0.0001)
 
 cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='pnl')  # 返回收益率时序数据
 cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name='_AnnualReturn')  # 年化收益率
